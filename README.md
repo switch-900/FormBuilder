@@ -2,7 +2,7 @@
 
 A lightweight, browser-based tool for structured communication with AI assistants. Stop the back-and-forth—get all your questions answered in one clean form.
 
-🔗 **[Live Demo](https://yourusername.github.io/json-form-builder/)**
+🔗 **[Live Demo](https://switch-900.github.io/FormBuilder/)**
 
 ## What is this?
 
