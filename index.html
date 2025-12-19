@@ -25,29 +25,70 @@
     }
     
     header { 
-      padding:60px 20px 40px; 
+      padding:80px 20px 60px; 
       border-bottom:1px solid var(--line); 
       background:linear-gradient(180deg,#0f1724,#0b0f14);
       text-align:center;
+      position:relative;
+      overflow:hidden;
+    }
+    
+    header::before {
+      content:'';
+      position:absolute;
+      top:-50%;
+      left:-50%;
+      width:200%;
+      height:200%;
+      background:radial-gradient(circle at center, rgba(110,168,255,.08) 0%, transparent 70%);
+      pointer-events:none;
+    }
+    
+    header .hero-content {
+      position:relative;
+      z-index:1;
+      max-width:900px;
+      margin:0 auto;
     }
     
     header h1 { 
-      margin:0 0 12px; 
-      font-size:42px; 
-      letter-spacing:.5px;
+      margin:0 0 24px; 
+      font-size:18px; 
+      letter-spacing:2px;
+      text-transform:uppercase;
+      color:var(--accent);
+      font-weight:600;
+    }
+    
+    header .hero-title {
+      margin:0 0 24px;
+      font-size:52px;
+      font-weight:800;
+      line-height:1.2;
       background:linear-gradient(135deg, var(--accent), var(--success));
       -webkit-background-clip:text;
       -webkit-text-fill-color:transparent;
       background-clip:text;
     }
     
-    header p { 
-      margin:0; 
-      font-size:18px; 
-      color:var(--muted);
-      max-width:600px;
-      margin:0 auto;
+    header .hero-subtitle {
+      margin:0 0 16px;
+      font-size:22px;
+      color:var(--text);
+      font-weight:500;
+      line-height:1.4;
     }
+    
+    header .hero-description { 
+      margin:0 0 32px; 
+      font-size:17px; 
+      color:var(--muted);
+      max-width:700px;
+      margin-left:auto;
+      margin-right:auto;
+      line-height:1.6;
+    }
+    
     
     .hero-btn {
       display:inline-block;
@@ -252,8 +293,10 @@
     }
     
     @media (max-width: 768px) {
-      header h1 { font-size:32px; }
-      header p { font-size:16px; }
+      header { padding:60px 20px 40px; }
+      header .hero-title { font-size:36px; }
+      header .hero-subtitle { font-size:18px; }
+      header .hero-description { font-size:15px; }
       .hero-btn { font-size:16px; padding:14px 28px; }
       h2 { font-size:24px; }
       .card { padding:24px; }
@@ -263,9 +306,13 @@
 <body>
 
 <header>
-  <h1>JSON Form Builder</h1>
-  <p>Stop the back-and-forth. Get structured answers from AI in seconds.</p>
-  <a href="form-builder.html" class="hero-btn">Launch Form Builder →</a>
+  <div class="hero-content">
+    <h1>JSON Form Builder</h1>
+    <div class="hero-title">Turn AI questions into forms.<br>Answer once. Keep working.</div>
+    <p class="hero-subtitle">When ChatGPT or Claude needs information, they give you a schema. You fill a form. They get structured answers.</p>
+    <p class="hero-description">No more 20 questions. No more scattered conversations. Just clean, efficient communication with AI assistants.</p>
+    <a href="form-builder.html" class="hero-btn">Launch Form Builder →</a>
+  </div>
 </header>
 
 <div class="container">
