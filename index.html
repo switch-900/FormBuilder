@@ -1,0 +1,465 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>JSON Form Builder - Structured AI Conversations</title>
+  <meta name="description" content="A tool for efficient, structured communication with AI assistants using JSON schemas and forms.">
+  <style>
+    :root { 
+      --bg:#0b0f14; 
+      --card:#121824; 
+      --muted:#7b8aa6; 
+      --text:#e8eefc; 
+      --line:#223047; 
+      --accent:#6ea8ff;
+      --success:#8cffb4;
+    }
+    * { box-sizing:border-box; }
+    body { 
+      margin:0; 
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif; 
+      background:var(--bg); 
+      color:var(--text);
+      line-height:1.6;
+    }
+    
+    header { 
+      padding:60px 20px 40px; 
+      border-bottom:1px solid var(--line); 
+      background:linear-gradient(180deg,#0f1724,#0b0f14);
+      text-align:center;
+    }
+    
+    header h1 { 
+      margin:0 0 12px; 
+      font-size:42px; 
+      letter-spacing:.5px;
+      background:linear-gradient(135deg, var(--accent), var(--success));
+      -webkit-background-clip:text;
+      -webkit-text-fill-color:transparent;
+      background-clip:text;
+    }
+    
+    header p { 
+      margin:0; 
+      font-size:18px; 
+      color:var(--muted);
+      max-width:600px;
+      margin:0 auto;
+    }
+    
+    .hero-btn {
+      display:inline-block;
+      margin-top:30px;
+      padding:16px 32px;
+      background:rgba(110,168,255,.12);
+      border:1px solid rgba(110,168,255,.4);
+      border-radius:12px;
+      color:var(--text);
+      text-decoration:none;
+      font-size:18px;
+      font-weight:600;
+      transition:all 0.2s;
+    }
+    
+    .hero-btn:hover {
+      background:rgba(110,168,255,.2);
+      border-color:rgba(110,168,255,.6);
+      transform:translateY(-2px);
+    }
+    
+    .container { 
+      max-width:1000px; 
+      margin:0 auto; 
+      padding:40px 20px;
+    }
+    
+    .card { 
+      background:var(--card); 
+      border:1px solid var(--line); 
+      border-radius:14px; 
+      padding:32px; 
+      margin-bottom:24px;
+      box-shadow: 0 10px 30px rgba(0,0,0,.25);
+    }
+    
+    h2 { 
+      margin:0 0 16px; 
+      font-size:28px;
+      color:var(--accent);
+    }
+    
+    h3 { 
+      margin:24px 0 12px; 
+      font-size:20px;
+      color:var(--text);
+    }
+    
+    p { 
+      margin:0 0 16px; 
+      color:var(--muted);
+    }
+    
+    .problem { 
+      background:rgba(255,160,160,.08); 
+      border-left:3px solid rgba(255,160,160,.4);
+      padding:20px;
+      margin:20px 0;
+      border-radius:8px;
+    }
+    
+    .solution { 
+      background:rgba(140,255,180,.08); 
+      border-left:3px solid rgba(140,255,180,.4);
+      padding:20px;
+      margin:20px 0;
+      border-radius:8px;
+    }
+    
+    .steps { 
+      display:grid; 
+      gap:20px;
+      margin:30px 0;
+    }
+    
+    .step { 
+      display:flex; 
+      gap:20px; 
+      align-items:flex-start;
+      padding:20px;
+      background:rgba(110,168,255,.05);
+      border:1px solid var(--line);
+      border-radius:12px;
+    }
+    
+    .step-num { 
+      flex-shrink:0;
+      width:40px;
+      height:40px;
+      border-radius:50%;
+      background:rgba(110,168,255,.15);
+      border:2px solid rgba(110,168,255,.4);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-weight:700;
+      font-size:18px;
+    }
+    
+    .step-content h3 { 
+      margin:0 0 8px;
+      font-size:18px;
+    }
+    
+    .step-content p { 
+      margin:0;
+      font-size:14px;
+    }
+    
+    code { 
+      background:rgba(110,168,255,.1);
+      padding:2px 6px;
+      border-radius:4px;
+      font-family:'Courier New', monospace;
+      font-size:14px;
+      color:var(--accent);
+    }
+    
+    pre { 
+      background:#070a10;
+      border:1px solid var(--line);
+      border-radius:12px;
+      padding:20px;
+      overflow-x:auto;
+      margin:20px 0;
+    }
+    
+    pre code { 
+      background:none;
+      padding:0;
+      color:var(--text);
+    }
+    
+    .feature-grid { 
+      display:grid; 
+      grid-template-columns:repeat(auto-fit, minmax(250px, 1fr)); 
+      gap:20px;
+      margin:30px 0;
+    }
+    
+    .feature { 
+      padding:24px;
+      background:rgba(110,168,255,.05);
+      border:1px solid var(--line);
+      border-radius:12px;
+    }
+    
+    .feature h3 { 
+      margin:0 0 12px;
+      font-size:18px;
+      color:var(--success);
+    }
+    
+    .feature p { 
+      margin:0;
+      font-size:14px;
+    }
+    
+    ul { 
+      color:var(--muted);
+      padding-left:24px;
+    }
+    
+    li { 
+      margin-bottom:8px;
+    }
+    
+    .use-case { 
+      background:rgba(110,168,255,.05);
+      border:1px solid var(--line);
+      padding:20px;
+      border-radius:12px;
+      margin-bottom:16px;
+    }
+    
+    .use-case h4 { 
+      margin:0 0 8px;
+      color:var(--accent);
+      font-size:16px;
+    }
+    
+    .use-case p { 
+      margin:0;
+      font-size:14px;
+    }
+    
+    footer { 
+      text-align:center;
+      padding:40px 20px;
+      border-top:1px solid var(--line);
+      color:var(--muted);
+      font-size:14px;
+    }
+    
+    footer a { 
+      color:var(--accent);
+      text-decoration:none;
+    }
+    
+    footer a:hover { 
+      text-decoration:underline;
+    }
+    
+    @media (max-width: 768px) {
+      header h1 { font-size:32px; }
+      header p { font-size:16px; }
+      .hero-btn { font-size:16px; padding:14px 28px; }
+      h2 { font-size:24px; }
+      .card { padding:24px; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>JSON Form Builder</h1>
+  <p>Stop the back-and-forth. Get structured answers from AI in seconds.</p>
+  <a href="form-builder.html" class="hero-btn">Launch Form Builder →</a>
+</header>
+
+<div class="container">
+  
+  <div class="card">
+    <h2>The Problem</h2>
+    <div class="problem">
+      <p><strong>AI conversations can be inefficient:</strong></p>
+      <ul>
+        <li>You ask a question, AI asks 3 follow-up questions</li>
+        <li>You answer those, AI asks 3 more</li>
+        <li>Multiple rounds of back-and-forth before real work begins</li>
+        <li>Information gets scattered across messages</li>
+        <li>Hard to track what you've already provided</li>
+      </ul>
+    </div>
+    
+    <div class="solution">
+      <p><strong>The Solution: Structured Forms</strong></p>
+      <p>Instead of playing 20 questions, the AI gives you a JSON schema with all the questions upfront. You fill out a clean form, export your answers as JSON, and paste it back. One round trip instead of five.</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>How It Works</h2>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-content">
+          <h3>AI Provides Schema</h3>
+          <p>Your AI assistant (ChatGPT, Claude, etc.) gives you a JSON schema with all the questions it needs answered.</p>
+        </div>
+      </div>
+      
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-content">
+          <h3>You Fill the Form</h3>
+          <p>Paste the schema into the Form Builder. It generates a clean form with text inputs, dropdowns, checkboxes, and more.</p>
+        </div>
+      </div>
+      
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-content">
+          <h3>Export Answers</h3>
+          <p>Fill out the form at your own pace. Click "Copy answers JSON" to get a clean, structured JSON with all your responses.</p>
+        </div>
+      </div>
+      
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-content">
+          <h3>Paste Back to AI</h3>
+          <p>Send the answers JSON back to your AI. It now has everything it needs to continue without asking more questions.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Features</h2>
+    <div class="feature-grid">
+      <div class="feature">
+        <h3>7 Field Types</h3>
+        <p>Text, textarea, numbers, checkboxes, radio buttons, select dropdowns, and multi-select checkboxes.</p>
+      </div>
+      
+      <div class="feature">
+        <h3>100% Local</h3>
+        <p>Everything runs in your browser. No data sent to servers. Your information stays private.</p>
+      </div>
+      
+      <div class="feature">
+        <h3>Clean Export</h3>
+        <p>One-click copy to clipboard. Answers JSON is ready to paste directly into your AI conversation.</p>
+      </div>
+      
+      <div class="feature">
+        <h3>AI Prompt Generator</h3>
+        <p>Built-in prompt that explains this workflow to AI assistants, so they understand the format.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Example Schema</h2>
+    <p>Here's what a simple schema looks like:</p>
+    <pre><code>{
+  "version": "1.0",
+  "title": "Website Design Preferences",
+  "description": "Quick questions to lock in the design direction",
+  "fields": [
+    {
+      "id": "color_scheme",
+      "label": "Choose a color scheme",
+      "type": "select",
+      "required": true,
+      "options": [
+        { "value": "dark", "label": "Dark mode (like this site)" },
+        { "value": "light", "label": "Light and minimal" },
+        { "value": "colorful", "label": "Vibrant and colorful" }
+      ]
+    },
+    {
+      "id": "must_have",
+      "label": "Must-have features",
+      "type": "checkboxes",
+      "options": [
+        { "value": "mobile", "label": "Mobile responsive" },
+        { "value": "animations", "label": "Smooth animations" },
+        { "value": "forms", "label": "Contact forms" }
+      ]
+    },
+    {
+      "id": "inspiration",
+      "label": "Link to sites you like (optional)",
+      "type": "textarea",
+      "placeholder": "Paste URLs or describe what you like..."
+    }
+  ]
+}</code></pre>
+  </div>
+
+  <div class="card">
+    <h2>Use Cases</h2>
+    
+    <div class="use-case">
+      <h4>🎨 Creative Projects</h4>
+      <p>Lock in art direction, brand guidelines, or design preferences before the AI starts generating concepts.</p>
+    </div>
+    
+    <div class="use-case">
+      <h4>💻 Development Tasks</h4>
+      <p>Specify requirements, tech stack preferences, and constraints before code generation begins.</p>
+    </div>
+    
+    <div class="use-case">
+      <h4>📝 Content Creation</h4>
+      <p>Define tone, target audience, keywords, and structure before the AI writes articles or copy.</p>
+    </div>
+    
+    <div class="use-case">
+      <h4>🎓 Educational Resources</h4>
+      <p>Specify learning objectives, student level, curriculum standards, and format preferences for lesson materials.</p>
+    </div>
+    
+    <div class="use-case">
+      <h4>🔧 Configuration & Setup</h4>
+      <p>Collect all setup parameters, preferences, and options before generating config files or scripts.</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Getting Started</h2>
+    <h3>For AI Users:</h3>
+    <ol>
+      <li>Copy the "Schema + AI Prompt" from the form builder</li>
+      <li>Paste it into your AI conversation (ChatGPT, Claude, etc.)</li>
+      <li>The AI will understand the format and provide schemas when needed</li>
+    </ol>
+    
+    <h3>For AI Assistants:</h3>
+    <p>When you need structured information from a user:</p>
+    <ol>
+      <li>Create a JSON schema following the format shown in examples</li>
+      <li>Provide it to the user with clear instructions</li>
+      <li>Wait for their answers JSON response</li>
+      <li>Use the structured data to continue efficiently</li>
+    </ol>
+  </div>
+
+  <div class="card">
+    <h2>Benefits</h2>
+    <ul>
+      <li><strong>Saves Time:</strong> One form instead of multiple back-and-forth messages</li>
+      <li><strong>Clear Communication:</strong> All questions and answers in one place</li>
+      <li><strong>Better Results:</strong> AI gets complete information upfront</li>
+      <li><strong>Structured Data:</strong> Clean JSON format, easy to process</li>
+      <li><strong>Reusable:</strong> Save schemas for recurring tasks</li>
+      <li><strong>Private:</strong> Everything runs locally in your browser</li>
+    </ul>
+  </div>
+
+  <div style="text-align:center; margin:60px 0;">
+    <a href="form-builder.html" class="hero-btn">Get Started with Form Builder →</a>
+  </div>
+
+</div>
+
+<footer>
+  <p>JSON Form Builder - Built for efficient AI conversations</p>
+  <p><a href="https://github.com/yourusername/json-form-builder" target="_blank">View on GitHub</a></p>
+</footer>
+
+</body>
+</html>
