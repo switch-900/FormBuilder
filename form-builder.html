@@ -1,0 +1,558 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>JSON → Form Builder (Local)</title>
+  <style>
+    :root { --bg:#0b0f14; --card:#121824; --muted:#7b8aa6; --text:#e8eefc; --line:#223047; --accent:#6ea8ff; }
+    *{ box-sizing:border-box; }
+    body{ margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif; background:var(--bg); color:var(--text); }
+    header{ padding:18px 16px; border-bottom:1px solid var(--line); background:linear-gradient(180deg,#0f1724,#0b0f14); }
+    h1{ margin:0; font-size:18px; letter-spacing:.2px; }
+    .wrap{ max-width:1100px; margin:0 auto; padding:16px; display:grid; gap:16px; grid-template-columns: 1fr 1fr; }
+    @media (max-width: 980px){ .wrap{ grid-template-columns:1fr; } }
+    .card{ background:var(--card); border:1px solid var(--line); border-radius:14px; padding:14px; box-shadow: 0 10px 30px rgba(0,0,0,.25); }
+    .row{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+    label{ display:block; font-size:12px; color:var(--muted); margin-bottom:6px; }
+    input[type="text"], input[type="number"], textarea, select {
+      width:100%; border:1px solid var(--line); background:#0c1220; color:var(--text);
+      padding:10px 10px; border-radius:10px; outline:none;
+    }
+    textarea{ min-height:92px; resize:vertical; }
+    input:focus, textarea:focus, select:focus{ border-color:var(--accent); box-shadow:0 0 0 2px rgba(110,168,255,.15); }
+    .btn{
+      border:1px solid var(--line); background:#0c1220; color:var(--text);
+      padding:10px 12px; border-radius:10px; cursor:pointer; font-size:13px;
+    }
+    .btn.primary{ background:rgba(110,168,255,.12); border-color:rgba(110,168,255,.4); }
+    .btn.secondary{ background:rgba(140,255,180,.08); border-color:rgba(140,255,180,.3); }
+    .btn:active{ transform: translateY(1px); }
+    .muted{ color:var(--muted); font-size:12px; }
+    .field{ padding:12px; border:1px dashed rgba(123,138,166,.25); border-radius:12px; margin-bottom:10px; }
+    .field h3{ margin:0 0 6px; font-size:14px; }
+    .hint{ font-size:12px; color:var(--muted); margin-top:6px; }
+    .grid2{ display:grid; grid-template-columns: 1fr 1fr; gap:10px; }
+    @media (max-width: 600px){ .grid2{ grid-template-columns:1fr; } }
+    .pill{ display:inline-flex; padding:2px 8px; border-radius:999px; background:rgba(110,168,255,.12); border:1px solid rgba(110,168,255,.25); color:var(--text); font-size:12px; }
+    .hr{ height:1px; background:var(--line); margin:10px 0; }
+    .small{ font-size:11px; color:var(--muted); }
+    .checkrow{ display:flex; gap:10px; flex-wrap:wrap; }
+    .checkrow label{ margin:0; color:var(--text); font-size:13px; }
+    .opt{ display:flex; gap:10px; align-items:center; padding:8px 10px; border:1px solid var(--line); border-radius:10px; background:#0c1220; }
+    .opt input{ margin:0; }
+    pre{ margin:0; padding:12px; border-radius:12px; background:#070a10; border:1px solid var(--line); overflow:auto; max-height:420px; }
+    .toast{ color:var(--muted); font-size:12px; margin-top:8px; }
+  </style>
+</head>
+<body>
+<header>
+  <div class="wrap" style="grid-template-columns:1fr; padding:0 16px; max-width:1100px;">
+    <div class="row" style="justify-content:space-between;">
+      <div>
+        <h1>JSON → Form Builder (Local)</h1>
+        <div class="muted">Paste assistant JSON on the left → fill the form → copy answers JSON on the right.</div>
+      </div>
+      <div class="row">
+        <span class="pill" id="schemaStatus">No schema loaded</span>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+  <!-- Left: Schema input -->
+  <section class="card">
+    <div class="row" style="justify-content:space-between;">
+      <div>
+        <h2 style="margin:0; font-size:16px;">1) Paste Schema JSON</h2>
+        <div class="small">I'll respond in this schema format. You paste it here.</div>
+      </div>
+      <div class="row">
+        <button class="btn" id="btnLoadExample">Load example</button>
+        <button class="btn primary" id="btnBuild">Build form</button>
+      </div>
+    </div>
+    <div class="hr"></div>
+    <label for="schemaInput">Schema JSON</label>
+    <textarea id="schemaInput" spellcheck="false" placeholder='{
+  "version": "1.0",
+  "title": "Sat Vandals — Next Step",
+  "fields": [...]
+}'></textarea>
+    <div class="toast" id="schemaToast"></div>
+    
+    <div class="hr"></div>
+    <div style="margin-bottom: 10px;">
+      <label>Quick Actions</label>
+      <div class="small" style="margin-bottom: 8px;">Copy schema with AI instructions for structured conversations</div>
+    </div>
+    <div class="row">
+      <button class="btn secondary" id="btnCopyWithPrompt">📋 Copy Schema + AI Prompt</button>
+      <button class="btn" id="btnCopySchema">Copy Schema Only</button>
+    </div>
+  </section>
+
+  <!-- Right: Form + Output -->
+  <section class="card">
+    <div class="row" style="justify-content:space-between;">
+      <div>
+        <h2 style="margin:0; font-size:16px;">2) Fill Form → Export Answers</h2>
+        <div class="small">Answers JSON is what you paste back into your app or into ChatGPT.</div>
+      </div>
+      <div class="row">
+        <button class="btn" id="btnClear">Clear answers</button>
+        <button class="btn primary" id="btnExport">Copy answers JSON</button>
+      </div>
+    </div>
+    <div class="hr"></div>
+
+    <div id="formArea" class="muted">Build a form from schema JSON to begin.</div>
+
+    <div class="hr"></div>
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+      <label style="margin:0;">Answers JSON</label>
+      <button class="btn" id="btnCopyAnswersInline" style="padding:6px 12px; font-size:12px;">📋 Copy</button>
+    </div>
+    <pre id="answersOut">{}</pre>
+    <div class="toast" id="answersToast"></div>
+  </section>
+</div>
+
+<script>
+/**
+ * Schema format (v1)
+ * {
+ *   version: "1.0",
+ *   title: "Form title",
+ *   description?: "Optional",
+ *   context?: { any },
+ *   fields: [
+ *     {
+ *       id: "short_unique_key",
+ *       label: "Question / Label",
+ *       type: "text"|"textarea"|"number"|"checkbox"|"checkboxes"|"radio"|"select",
+ *       required?: true,
+ *       default?: any,
+ *       placeholder?: string,
+ *       help?: string,
+ *       options?: [{ value:"x", label:"X", help?: "..." }, ...],   // for radio/select/checkboxes
+ *       min?: number, max?: number, step?: number                 // for number
+ *     }
+ *   ]
+ * }
+ */
+
+const $ = (id) => document.getElementById(id);
+
+const schemaInput = $("schemaInput");
+const formArea = $("formArea");
+const answersOut = $("answersOut");
+const schemaToast = $("schemaToast");
+const answersToast = $("answersToast");
+const schemaStatus = $("schemaStatus");
+
+let currentSchema = null;
+let answers = {};
+
+function toast(el, msg, ok=true){
+  el.textContent = msg;
+  el.style.color = ok ? "rgba(140,255,180,.85)" : "rgba(255,160,160,.9)";
+  setTimeout(()=>{ el.textContent=""; el.style.color=""; }, 2200);
+}
+
+function safeParseJSON(text){
+  try { return { ok:true, data: JSON.parse(text) }; }
+  catch(e){ return { ok:false, error: e.message }; }
+}
+
+function setStatus(text, good){
+  schemaStatus.textContent = text;
+  schemaStatus.style.borderColor = good ? "rgba(110,168,255,.45)" : "rgba(255,160,160,.45)";
+  schemaStatus.style.background = good ? "rgba(110,168,255,.12)" : "rgba(255,160,160,.10)";
+}
+
+function updateAnswersOut(){
+  answersOut.textContent = JSON.stringify({
+    version: "1.0",
+    title: currentSchema?.title ?? null,
+    answers
+  }, null, 2);
+}
+
+function clearAnswers(){
+  answers = {};
+  // re-apply defaults if schema present
+  if(currentSchema?.fields){
+    for(const f of currentSchema.fields){
+      if(f.default !== undefined) answers[f.id] = f.default;
+      else if(f.type === "checkbox") answers[f.id] = false;
+      else if(f.type === "checkboxes") answers[f.id] = [];
+      else answers[f.id] = "";
+    }
+  }
+  // reflect into DOM if form exists
+  renderForm(currentSchema);
+  updateAnswersOut();
+}
+
+function el(tag, attrs={}, children=[]){
+  const n = document.createElement(tag);
+  for(const [k,v] of Object.entries(attrs)){
+    if(k === "class") n.className = v;
+    else if(k === "html") n.innerHTML = v;
+    else if(k.startsWith("on") && typeof v === "function") n.addEventListener(k.slice(2), v);
+    else n.setAttribute(k, v);
+  }
+  for(const c of children) n.appendChild(c);
+  return n;
+}
+
+function fieldWrapper(f){
+  const head = el("div", {}, [
+    el("h3", { html: escapeHTML(f.label || f.id) }),
+  ]);
+  const meta = el("div", { class:"row" }, [
+    el("span", { class:"pill", html: escapeHTML(f.type) }),
+    ...(f.required ? [el("span", { class:"pill", html:"required" })] : [])
+  ]);
+
+  const wrap = el("div", { class:"field" }, [
+    el("div", { class:"row", style:"justify-content:space-between; align-items:flex-start;" }, [
+      el("div", {}, [head, meta].filter(Boolean)),
+    ])
+  ]);
+
+  return wrap;
+}
+
+function escapeHTML(str){
+  return String(str ?? "").replace(/[&<>"']/g, s => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[s]));
+}
+
+function renderForm(schema){
+  formArea.innerHTML = "";
+  if(!schema || !schema.fields || !Array.isArray(schema.fields)){
+    formArea.textContent = "Invalid schema. Need { fields: [...] }";
+    return;
+  }
+
+  // header
+  const header = el("div", {}, [
+    el("div", { class:"row", style:"justify-content:space-between; align-items:flex-start;" }, [
+      el("div", {}, [
+        el("div", { style:"font-size:16px; font-weight:700;", html: escapeHTML(schema.title || "Form") }),
+        schema.description ? el("div", { class:"muted", style:"margin-top:4px;", html: escapeHTML(schema.description) }) : el("div")
+      ]),
+      el("div", { class:"muted", html: `${schema.fields.length} fields` })
+    ])
+  ]);
+  formArea.appendChild(header);
+  formArea.appendChild(el("div", { class:"hr" }));
+
+  // fields
+  for(const f of schema.fields){
+    if(!f?.id || !f?.type) continue;
+
+    // init answer key if missing
+    if(answers[f.id] === undefined){
+      if(f.default !== undefined) answers[f.id] = f.default;
+      else if(f.type === "checkbox") answers[f.id] = false;
+      else if(f.type === "checkboxes") answers[f.id] = [];
+      else answers[f.id] = "";
+    }
+
+    const wrap = fieldWrapper(f);
+
+    // input node
+    let inputNode = null;
+
+    if(f.type === "text"){
+      inputNode = el("input", {
+        type:"text",
+        value: answers[f.id] ?? "",
+        placeholder: f.placeholder ?? "",
+        oninput: (e)=>{ answers[f.id]=e.target.value; updateAnswersOut(); }
+      });
+      wrap.appendChild(inputNode);
+    }
+
+    if(f.type === "textarea"){
+      inputNode = el("textarea", {
+        placeholder: f.placeholder ?? "",
+        oninput: (e)=>{ answers[f.id]=e.target.value; updateAnswersOut(); }
+      });
+      inputNode.value = answers[f.id] ?? "";
+      wrap.appendChild(inputNode);
+    }
+
+    if(f.type === "number"){
+      inputNode = el("input", {
+        type:"number",
+        value: answers[f.id] ?? "",
+        min: f.min ?? "",
+        max: f.max ?? "",
+        step: f.step ?? "1",
+        placeholder: f.placeholder ?? "",
+        oninput: (e)=>{ answers[f.id]= (e.target.value === "" ? "" : Number(e.target.value)); updateAnswersOut(); }
+      });
+      wrap.appendChild(inputNode);
+    }
+
+    if(f.type === "checkbox"){
+      const box = el("input", {
+        type:"checkbox",
+        ...(answers[f.id] ? { checked:"checked" } : {}),
+        onchange: (e)=>{ answers[f.id]=!!e.target.checked; updateAnswersOut(); }
+      });
+      const row = el("div", { class:"opt" }, [
+        box,
+        el("div", {}, [
+          el("div", { html: escapeHTML(f.placeholder || "Yes / No") }),
+          f.help ? el("div", { class:"hint", html: escapeHTML(f.help) }) : el("div")
+        ])
+      ]);
+      wrap.appendChild(row);
+    }
+
+    if(f.type === "select"){
+      const sel = el("select", {
+        onchange:(e)=>{ answers[f.id]=e.target.value; updateAnswersOut(); }
+      });
+      const opts = Array.isArray(f.options) ? f.options : [];
+      sel.appendChild(el("option", { value:"", html:"— Select —" }));
+      for(const o of opts){
+        const opt = el("option", { value: String(o.value), html: escapeHTML(o.label ?? o.value) });
+        if(String(answers[f.id]) === String(o.value)) opt.selected = true;
+        sel.appendChild(opt);
+      }
+      wrap.appendChild(sel);
+    }
+
+    if(f.type === "radio"){
+      const opts = Array.isArray(f.options) ? f.options : [];
+      const group = el("div", { class:"checkrow" });
+      for(const o of opts){
+        const r = el("input", { type:"radio", name: f.id, value: String(o.value) });
+        if(String(answers[f.id]) === String(o.value)) r.checked = true;
+        r.addEventListener("change", ()=>{ if(r.checked){ answers[f.id]=String(o.value); updateAnswersOut(); } });
+
+        group.appendChild(el("div", { class:"opt" }, [
+          r,
+          el("div", {}, [
+            el("div", { html: escapeHTML(o.label ?? o.value) }),
+            o.help ? el("div", { class:"hint", html: escapeHTML(o.help) }) : el("div")
+          ])
+        ]));
+      }
+      wrap.appendChild(group);
+    }
+
+    if(f.type === "checkboxes"){
+      const opts = Array.isArray(f.options) ? f.options : [];
+      const group = el("div", { class:"checkrow" });
+      const current = Array.isArray(answers[f.id]) ? answers[f.id] : [];
+      for(const o of opts){
+        const c = el("input", { type:"checkbox" });
+        if(current.map(String).includes(String(o.value))) c.checked = true;
+
+        c.addEventListener("change", ()=>{
+          const set = new Set((Array.isArray(answers[f.id]) ? answers[f.id] : []).map(String));
+          if(c.checked) set.add(String(o.value));
+          else set.delete(String(o.value));
+          answers[f.id] = Array.from(set);
+          updateAnswersOut();
+        });
+
+        group.appendChild(el("div", { class:"opt" }, [
+          c,
+          el("div", {}, [
+            el("div", { html: escapeHTML(o.label ?? o.value) }),
+            o.help ? el("div", { class:"hint", html: escapeHTML(o.help) }) : el("div")
+          ])
+        ]));
+      }
+      wrap.appendChild(group);
+    }
+
+    // help text
+    if(f.help && f.type !== "checkbox"){
+      wrap.appendChild(el("div", { class:"hint", html: escapeHTML(f.help) }));
+    }
+
+    // required warning display (simple)
+    if(f.required){
+      wrap.appendChild(el("div", { class:"hint", html:"Required." }));
+    }
+
+    formArea.appendChild(wrap);
+  }
+
+  updateAnswersOut();
+}
+
+function buildFromSchema(){
+  const parsed = safeParseJSON(schemaInput.value.trim());
+  if(!parsed.ok){
+    toast(schemaToast, "JSON parse error: " + parsed.error, false);
+    setStatus("Schema error", false);
+    return;
+  }
+  const schema = parsed.data;
+  if(!schema || !Array.isArray(schema.fields)){
+    toast(schemaToast, "Schema must include { fields: [...] }", false);
+    setStatus("Schema invalid", false);
+    return;
+  }
+  currentSchema = schema;
+  setStatus("Schema loaded", true);
+  toast(schemaToast, "Form built.");
+  renderForm(currentSchema);
+}
+
+function copyText(text){
+  return navigator.clipboard.writeText(text);
+}
+
+function generateAIPrompt(){
+  const schemaText = schemaInput.value.trim() || "{}";
+  
+  return `Let's use a structured form system for efficient communication. When you need specific information from me:
+
+1. Provide a JSON schema with your questions/fields
+2. I'll paste it into my form builder, fill it out, and return an answers JSON
+3. Use my answers to continue our work
+
+This keeps conversations focused and ensures you get exactly the information you need without back-and-forth clarifications.
+
+**Schema format to follow:**
+\`\`\`json
+{
+  "version": "1.0",
+  "title": "Brief title for this form",
+  "description": "Optional: What this form is for",
+  "fields": [
+    {
+      "id": "unique_key",
+      "label": "Your question or field label",
+      "type": "text|textarea|number|checkbox|checkboxes|radio|select",
+      "required": true,
+      "placeholder": "Optional hint text",
+      "help": "Optional: Additional context",
+      "options": [{"value": "option1", "label": "Option 1"}],
+      "default": "optional default value"
+    }
+  ]
+}
+\`\`\`
+
+**Field types available:**
+- text: Single-line text input
+- textarea: Multi-line text input
+- number: Numeric input (supports min, max, step)
+- checkbox: Single yes/no checkbox
+- checkboxes: Multiple checkboxes (returns array)
+- radio: Single choice from options
+- select: Dropdown menu
+
+**Current schema to use:**
+\`\`\`json
+${schemaText}
+\`\`\`
+
+Please confirm you understand this format, or provide an updated schema for me to fill out.`;
+}
+
+$("btnBuild").addEventListener("click", buildFromSchema);
+
+$("btnExport").addEventListener("click", async ()=>{
+  try{
+    const txt = answersOut.textContent;
+    await copyText(txt);
+    toast(answersToast, "Copied answers JSON to clipboard.");
+  }catch(e){
+    toast(answersToast, "Clipboard blocked. Select & copy manually.", false);
+  }
+});
+
+$("btnCopyAnswersInline").addEventListener("click", async ()=>{
+  try{
+    const txt = answersOut.textContent;
+    await copyText(txt);
+    toast(answersToast, "Copied answers JSON to clipboard.");
+  }catch(e){
+    toast(answersToast, "Clipboard blocked. Select & copy manually.", false);
+  }
+});
+
+$("btnClear").addEventListener("click", ()=>{
+  clearAnswers();
+  toast(answersToast, "Cleared answers.");
+});
+
+$("btnCopyWithPrompt").addEventListener("click", async ()=>{
+  try{
+    const prompt = generateAIPrompt();
+    await copyText(prompt);
+    toast(schemaToast, "Copied schema + AI prompt to clipboard!");
+  }catch(e){
+    toast(schemaToast, "Clipboard blocked. Select & copy manually.", false);
+  }
+});
+
+$("btnCopySchema").addEventListener("click", async ()=>{
+  try{
+    const schemaText = schemaInput.value.trim();
+    if(!schemaText){
+      toast(schemaToast, "No schema to copy.", false);
+      return;
+    }
+    await copyText(schemaText);
+    toast(schemaToast, "Copied schema JSON to clipboard.");
+  }catch(e){
+    toast(schemaToast, "Clipboard blocked. Select & copy manually.", false);
+  }
+});
+
+$("btnLoadExample").addEventListener("click", ()=>{
+  schemaInput.value = JSON.stringify({
+    version: "1.0",
+    title: "Sat Vandals — Next Step",
+    description: "Answer quickly. Export JSON and paste back into chat/app.",
+    fields: [
+      { id:"goal", label:"What do you want next (choose one)?", type:"select", required:true,
+        options:[
+          { value:"manifesto", label:"Write the manifesto" },
+          { value:"trait_rules", label:"Trait rules (constraints, no %)" },
+          { value:"owner_message", label:"Owner-only hidden message system" },
+          { value:"visual_styles", label:"More graffiti style exploration" }
+        ],
+        help:"Pick the next focus so responses stay short."
+      },
+      { id:"tone", label:"Tone", type:"radio", default:"sharp_minimal",
+        options:[
+          { value:"sharp_minimal", label:"Sharp + minimal (Banksy-ish)" },
+          { value:"playful", label:"Playful (more fun, less serious)" },
+          { value:"serious_art", label:"Serious art-world" }
+        ]
+      },
+      { id:"must_include", label:"Must include (keywords or phrases)", type:"textarea", placeholder:"e.g. 'Every sat is equal' / 'Proof of Vandalism' ..." },
+      { id:"avoid", label:"Avoid (words/vibes)", type:"textarea", placeholder:"e.g. 'NFT', 'roadmap', 'utility', 'wen', hype terms..." },
+      { id:"features", label:"Include these features", type:"checkboxes", default:["deterministic","base_coin_constant"],
+        options:[
+          { value:"deterministic", label:"Deterministic render from inscription ID" },
+          { value:"base_coin_constant", label:"Base coin never changes" },
+          { value:"layered_system", label:"Layer stack (coin → canvas → patterns → hero → interference)" },
+          { value:"owner_unlock", label:"Owner-only hidden message" }
+        ]
+      },
+      { id:"ok_to_publish", label:"Is it okay if this text is publish-ready (website/README)?", type:"checkbox", default:true }
+    ]
+  }, null, 2);
+  toast(schemaToast, "Loaded example schema.");
+});
+
+setStatus("No schema loaded", false);
+</script>
+</body>
+</html>
